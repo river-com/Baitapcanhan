@@ -9,7 +9,7 @@ public class Casio570UI   extends JFrame {
     private final casio570 calculator = new casio570();
     private final JTextField entry = new JTextField();
     private final JLabel lcdTop = new JLabel();
-    private final JLabel lcdBottom = new JLabel();
+    private final JTextField lcdBottom = new JTextField();
     private double answer;
     private boolean shift;
     private ScreenMode screenMode = ScreenMode.COMPUTE;
@@ -43,9 +43,9 @@ public class Casio570UI   extends JFrame {
         label(machine, "CLASSWIZ", 149, 61, 105, 17, new Font(Font.SANS_SERIF, Font.BOLD, 12), new Color(84, 190, 161));
         label(machine, "SHIFT", 43, 214, 46, 11, new Font(Font.SANS_SERIF, Font.BOLD, 8), new Color(238, 195, 76));
         label(machine, "ALPHA", 94, 214, 46, 11, new Font(Font.SANS_SERIF, Font.BOLD, 8), new Color(242, 103, 104));
-        lcdTop.setBounds(50, 111, 300, 18); lcdTop.setFont(new Font(Font.MONOSPACED, Font.BOLD, 11)); lcdTop.setForeground(new Color(220, 240, 219)); machine.add(lcdTop);
-        lcdBottom.setBounds(50, 130, 300, 17); lcdBottom.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 10)); lcdBottom.setForeground(new Color(189, 215, 190)); machine.add(lcdBottom);
-        entry.setBounds(50, 151, 300, 40); entry.setFont(new Font(Font.MONOSPACED, Font.BOLD, 19)); entry.setForeground(new Color(236, 250, 234)); entry.setBackground(new Color(20, 38, 35)); entry.setCaretColor(new Color(236, 250, 234)); entry.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4)); entry.setHorizontalAlignment(JTextField.RIGHT); entry.addActionListener(event -> equalsPressed()); machine.add(entry);
+        lcdTop.setBounds(50, 106, 300, 14); lcdTop.setFont(new Font(Font.MONOSPACED, Font.BOLD, 9)); lcdTop.setForeground(new Color(220, 240, 219)); machine.add(lcdTop);
+        entry.setBounds(50, 122, 300, 29); entry.setFont(new Font(Font.MONOSPACED, Font.BOLD, 16)); entry.setForeground(new Color(236, 250, 234)); entry.setBackground(new Color(20, 38, 35)); entry.setCaretColor(new Color(236, 250, 234)); entry.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4)); entry.setHorizontalAlignment(JTextField.LEFT); entry.addActionListener(event -> equalsPressed()); machine.add(entry);
+        lcdBottom.setBounds(50, 158, 300, 30); lcdBottom.setEditable(false); lcdBottom.setFont(new Font(Font.MONOSPACED, Font.BOLD, 18)); lcdBottom.setForeground(new Color(236, 250, 234)); lcdBottom.setBackground(new Color(20, 38, 35)); lcdBottom.setCaretColor(new Color(20, 38, 35)); lcdBottom.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4)); lcdBottom.setHorizontalAlignment(JTextField.RIGHT); machine.add(lcdBottom);
         JPanel keypad = new JPanel(new GridLayout(0, 5, 7, 7)); keypad.setOpaque(false); keypad.setBounds(39, 235, 322, 422);
         String[][] rows = {{"SHIFT","ALPHA","MODE","FUNC","DEL"},{"sin","cos","tan","log","ln"},{"x²","x^y","√","1/x","x!"},{"(",")","π","e","Ans"},{"MC","MR","STO","M+","ENG"},{"7","8","9","÷","AC"},{"4","5","6","×","^"},{"1","2","3","-","+"},{"0",".",";","+/-","="}};
         for (String[] row : rows) for (String caption : row) keypad.add(key(caption)); machine.add(keypad); backdrop.add(machine); return backdrop;
@@ -63,18 +63,18 @@ public class Casio570UI   extends JFrame {
         if (screenMode == ScreenMode.FUNCTION_MENU) { chooseFunction(key); return; }
         switch (key) {
             case "=" -> equalsPressed(); case "AC" -> reset(); case "DEL" -> delete();
-            case "SHIFT" -> { shift = !shift; lcdBottom.setText(shift ? "SHIFT đang bật" : "SHIFT đã tắt"); }
-            case "ALPHA" -> lcdBottom.setText("ALPHA: dùng M, Ans, π và e"); case "MODE" -> showModeMenu(); case "FUNC" -> showFunctionMenu();
+            case "SHIFT" -> { shift = !shift; setResult(shift ? "SHIFT đang bật" : "SHIFT đã tắt"); }
+            case "ALPHA" -> setResult("ALPHA: dùng M, Ans, π và e"); case "MODE" -> showModeMenu(); case "FUNC" -> showFunctionMenu();
             case "MC" -> { calculator.memoryClear(); showComputeInfo("Đã xóa bộ nhớ M"); } case "MR" -> insert("M"); case "M+" -> memoryAdd(); case "STO" -> memoryStore();
             case "Ans" -> insert("Ans"); case "π" -> insert("pi"); case "x²" -> insert(shift ? "^3" : "^2"); case "x^y" -> insert(shift ? "root(" : "^"); case "√" -> insert(shift ? "cbrt(" : "sqrt("); case "1/x" -> wrap("inv("); case "x!" -> insert(shift ? "nCr(" : "!");
-            case "log" -> insert(shift ? "logbase(" : "log("); case "ln" -> insert(shift ? "exp(" : "ln("); case "sin" -> insert(shift ? "asin(" : "sin("); case "cos" -> insert(shift ? "acos(" : "cos("); case "tan" -> insert(shift ? "atan(" : "tan("); case "ENG" -> insert("*10^"); case "×" -> insert("*"); case "÷" -> insert("/"); case "+/-" -> insert("-"); default -> insert(key);
+            case "log" -> insert(shift ? "logbase(" : "log("); case "ln" -> insert(shift ? "exp(" : "ln("); case "sin" -> insert(shift ? "asin(" : "sin("); case "cos" -> insert(shift ? "acos(" : "cos("); case "tan" -> insert(shift ? "atan(" : "tan("); case "ENG" -> insert("*10^"); case "×" -> insert("×"); case "÷" -> insert("/"); case "+/-" -> insert("-"); default -> insert(key);
         }
         if (!key.equals("SHIFT")) shift = false;
     }
 
     private void equalsPressed() {
         if (screenMode == ScreenMode.EQUATION) { captureEquationCoefficient(); return; } if (screenMode == ScreenMode.STATISTICS) { calculateStatistics(); return; }
-        try { String source = entry.getText().trim(); if (source.isEmpty()) return; answer = calculator.evaluate(source, answer); entry.setText(format(answer)); showComputeInfo(source + " = " + format(answer)); } catch (ArithmeticException error) { showError(error.getMessage()); }
+        try { String source = entry.getText().trim(); if (source.isEmpty()) return; answer = calculator.evaluate(source, answer); setResult(format(answer)); showComputeInfo(source + " = " + format(answer)); } catch (ArithmeticException error) { showError(error.getMessage()); }
     }
     private void showModeMenu() { screenMode = ScreenMode.MODE_MENU; entry.setText(""); lcdTop.setText("MODE: chọn một chế độ"); lcdBottom.setText("1:COMP  2:DEG  3:RAD  4:GRAD  5:EQN  6:STAT"); }
     private void chooseMode(String choice) {
@@ -95,12 +95,13 @@ public class Casio570UI   extends JFrame {
     }
     private void memoryStore() { try { calculator.memoryStore(calculator.evaluate(entry.getText(), answer)); showComputeInfo("Đã lưu vào M"); } catch (ArithmeticException error) { showError(error.getMessage()); } }
     private void memoryAdd() { try { calculator.memoryAdd(calculator.evaluate(entry.getText(), answer)); showComputeInfo("Đã cộng vào M"); } catch (ArithmeticException error) { showError(error.getMessage()); } }
-    private void reset() { entry.setText(""); shift = false; screenMode = ScreenMode.COMPUTE; showComputeInfo("Sẵn sàng tính toán"); }
-    private void insert(String text) { entry.replaceSelection(text); entry.requestFocusInWindow(); }
-    private void wrap(String function) { entry.setText(function + entry.getText() + ")"); entry.requestFocusInWindow(); }
-    private void delete() { int position = entry.getCaretPosition(); if (position > 0) { String text = entry.getText(); entry.setText(text.substring(0, position - 1) + text.substring(position)); entry.setCaretPosition(position - 1); } }
-    private void showComputeInfo(String message) { String unit = switch (calculator.getAngleUnit()) { case DEGREE -> "DEG"; case RADIAN -> "RAD"; case GRADIAN -> "GRAD"; }; lcdTop.setText(unit + (shift ? "  SHIFT" : "") + "    M=" + format(calculator.memoryRecall())); lcdBottom.setText(message); }
-    private void showError(String message) { lcdTop.setText("Math ERROR"); lcdBottom.setText(message); }
+    private void reset() { entry.setText(""); setResult(""); shift = false; screenMode = ScreenMode.COMPUTE; showComputeInfo("Sẵn sàng tính toán"); }
+    private void insert(String text) { setResult(""); entry.replaceSelection(text); entry.requestFocusInWindow(); }
+    private void wrap(String function) { setResult(""); entry.setText(function + entry.getText() + ")"); entry.setCaretPosition(entry.getText().length()); entry.requestFocusInWindow(); }
+    private void delete() { int position = entry.getCaretPosition(); if (position > 0) { setResult(""); String text = entry.getText(); entry.setText(text.substring(0, position - 1) + text.substring(position)); entry.setCaretPosition(position - 1); } }
+    private void setResult(String text) { lcdBottom.setText(text); lcdBottom.setCaretPosition(text.length()); }
+    private void showComputeInfo(String message) { String unit = switch (calculator.getAngleUnit()) { case DEGREE -> "DEG"; case RADIAN -> "RAD"; case GRADIAN -> "GRAD"; }; lcdTop.setText(unit + (shift ? "  SHIFT" : "") + "    M=" + format(calculator.memoryRecall())); }
+    private void showError(String message) { lcdTop.setText("Math ERROR"); setResult(message); }
     private static String format(double value) { if (value == Math.rint(value) && Math.abs(value) < 1e15) return String.format(Locale.US, "%.0f", value); return BigDecimal.valueOf(value).round(new MathContext(12)).stripTrailingZeros().toPlainString(); }
     private static String toolTip(String key) { return switch (key) { case "MODE" -> "Chế độ COMP, DEG/RAD, EQN, STAT"; case "FUNC" -> "Tổ hợp, chỉnh hợp và hàm hyperbolic"; case "SHIFT" -> "Bật chức năng vàng của phím kế tiếp"; case "ENG" -> "Chèn ×10^"; default -> key; }; }
     public static void main(String[] args) { SwingUtilities.invokeLater(() -> new Casio570UI().setVisible(true)); }
